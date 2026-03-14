@@ -1,0 +1,51 @@
+# ── Core Data & ML ──────────────────────────────────────────
+numpy==1.26.4
+pandas==2.1.4
+scikit-learn==1.5.2
+xgboost==3.0.3
+scipy==1.16.1
+statsmodels==0.14.5
+lightgbm==4.6.0
+joblib==1.4.2
+optuna==4.4.0
+
+# ── MLflow ───────────────────────────────────────────────────
+mlflow==2.14.1
+pyarrow==15.0.2
+cloudpickle==3.1.1
+sqlparse==0.5.3
+alembic==1.16.4
+SQLAlchemy==2.0.42
+Mako==1.3.10
+
+# ── Data Validation ──────────────────────────────────────────
+great_expectations==0.18.19
+altair>=4.2.1,<5.0
+
+# ── API Serving ───────────────────────────────────────────────
+fastapi>=0.115.2
+uvicorn>=0.30.5
+starlette>=0.40.0
+pydantic>=2.8.2
+python-multipart>=0.0.18
+gunicorn==22.0.0
+
+# ── Gradio UI ─────────────────────────────────────────────────
+gradio==5.23.3
+gradio-client==1.8.0
+pillow>=8.0,<11.0
+
+# ── HTTP & Networking ─────────────────────────────────────────
+requests==2.32.4
+httpx>=0.24.1
+urllib3==2.5.0
+certifi==2025.8.3
+charset-normalizer==3.4.3
+idna==3.10
+
+# ── Utils ─────────────────────────────────────────────────────
+python-dotenv==1.0.1
+PyYAML==6.0.2
+click==8.2.1
+tqdm==4.67.1
+setuptools<70.0

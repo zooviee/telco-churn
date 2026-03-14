@@ -1,0 +1,81 @@
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# ── Virtual Environment ───────────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+
+# ── Environment Variables ─────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── MLflow ───────────────────────────────────────────────────
+mlruns/
+mlartifacts/
+
+# ── Data ─────────────────────────────────────────────────────
+data/raw/
+data/processed/
+data/external/
+*.csv
+*.parquet
+*.feather
+
+# ── Documentation ───────────────────────────────────────────────────
+.docx
+.pdf
+
+
+# ── Model Artifacts ───────────────────────────────────────────
+artifacts/
+src/serving/model/
+
+# ── Notebooks ─────────────────────────────────────────────────
+notebooks/.ipynb_checkpoints/
+*.ipynb_checkpoints/
+.ipynb
+
+# ── Great Expectations ────────────────────────────────────────
+great_expectations/uncommitted/
+
+# ── Docker ───────────────────────────────────────────────────
+.docker/
+
+# ── macOS ────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ── IDE / Editors ────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Testing ──────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Misc ─────────────────────────────────────────────────────
+*.tmp
+*.bak
+.cache/
