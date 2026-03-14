@@ -1,63 +1,241 @@
-## Telco Churn – End-to-End ML Project
-### Purpose
+# Telco Churn — End-to-End MLOps Project
 
-Build and ship a full machine-learning solution for predicting customer churn in a telecom setting—from data prep and modeling to an API + web UI deployed on AWS.
+## Pipeline Overview
 
-### Problem solved & benefits
+![MLOps Pipeline](pipeline.svg)
 
-- Faster decisions: Predicts which customers are likely to churn so teams can act before they leave.
-- Operationalized ML: Model is accessible via a REST API and a simple UI; anyone can test it without notebooks.
-- Repeatable delivery: CI/CD + containers mean every change can be rebuilt, tested, and redeployed in a consistent way.
-- Traceable experiments: MLflow tracks runs, metrics, and artifacts for reproducibility and auditing.
+---
 
-### What I built
+## Purpose
 
-- Data & Modeling: Feature engineering + XGBoost classifier; experiments logged to MLflow.
-- Model tracking: Runs, metrics, and the serialized model logged under a named MLflow experiment.
-- Inference service: FastAPI app exposing /predict (POST) and a root health check /.
-- Web UI: Gradio interface mounted at /ui for quick, shareable manual testing.
-- Containerization: Docker image with uvicorn entrypoint (src.app.main:app) listening on port 8000.
-- CI/CD: GitHub Actions builds the image and pushes to Docker Hub; optionally triggers an ECS service update.
-- Orchestration: AWS ECS Fargate runs the container (serverless).
-- Networking: Application Load Balancer (ALB) on HTTP:80 forwarding to a Target Group (IP targets on HTTP:8000).
-- Security: Security groups scoped to allow ALB inbound 80 from the internet, and task inbound 8000 from the ALB SG.
-- Observability: CloudWatch Logs for container stdout/stderr and ECS service events.
+Build and ship a full machine-learning solution for predicting customer churn in a telecom setting — from data prep and modelling to a REST API and web UI deployed on Render.com.
 
-### Deployment flow (high-level)
+---
 
-- Push to main → GitHub Actions builds the Docker image and pushes it to Docker Hub.
-- ECS service is updated (manually or via the workflow) to force a new deployment.
-- ALB health checks hit / on port 8000; once healthy, traffic is routed to the new task.
-- Users call POST /predict or open the Gradio UI at /ui via the ALB DNS.
+## Problem Solved & Benefits
 
-### Roadblocks & how we solved them
+- **Faster decisions** — Predicts which customers are likely to churn so retention teams can act before they leave.
+- **Operationalised ML** — Model is accessible via a REST API and a simple web UI; anyone can test it without touching a notebook.
+- **Repeatable delivery** — CI/CD + containers mean every change can be rebuilt, tested, and redeployed consistently.
+- **Traceable experiments** — MLflow tracks every run, its metrics, parameters, and artifacts for full reproducibility.
 
-Unhealthy targets behind ALB
+---
 
-- Cause: App didn’t respond at the health-check path; listener/target port mismatches.
-- Fixes: Added GET / health endpoint; confirmed ALB listener on 80 forwards to TG on 8000; TG health check path set to /.
+## What I Built
 
-Module import error in container (ModuleNotFoundError: serving)
+| Component | Details |
+|-----------|---------|
+| **Data Validation** | Great Expectations — 23/23 checks on schema, business logic, and numeric ranges |
+| **Preprocessing** | Column cleaning, TotalCharges coercion, Churn → 0/1 mapping |
+| **Feature Engineering** | 5 binary encoded + 21 one-hot encoded + 5 numeric = 31 features |
+| **Model** | XGBoost classifier with `scale_pos_weight` for class imbalance |
+| **Hyperparameter Tuning** | Optuna — 30 trials optimising recall |
+| **Experiment Tracking** | MLflow — metrics, params, model artifacts logged per run |
+| **Inference Service** | FastAPI exposing `POST /predict` and `GET /` health check |
+| **Web UI** | Gradio interface mounted at `/ui` for manual testing |
+| **Containerisation** | Docker image built for `linux/amd64` with uvicorn on port 8000 |
+| **Deployment** | Render.com — live public URL via Docker Hub image |
+| **CI/CD** | GitHub Actions — build → push to Docker Hub → redeploy on Render |
 
-- Cause: Python path in the image didn’t include src/.
-- Fixes: Set PYTHONPATH=/app/src in the Dockerfile; corrected uvicorn app path to src.app.main:app.
+---
 
-ALB DNS timing out
+## Model Performance
 
-- Cause: Security group rules not aligned with traffic flow.
-- Fixes: ALB SG allows inbound 80 from 0.0.0.0/0; task SG allows inbound 8000 from the ALB SG; outbound open.
+| Metric | Value |
+|--------|-------|
+| Precision (Churn) | 0.490 |
+| Recall (Churn) | 0.821 |
+| F1 Score | 0.614 |
+| ROC AUC | 0.837 |
+| Classification Threshold | 0.35 |
 
-ECS redeploy not picking up the new image
+> The model is tuned for **high recall** — catching as many real churners as possible is prioritised over minimising false alarms.
 
-- Cause: Service still running previous task definition.
-- Fixes: Force new deployment (CLI or console) after pushing the new image; optional step added to CI.
+---
 
-Gradio UI error (“No runs found in experiment”)
+## Live Demo
 
-- Cause: Inference/UI expected an MLflow-logged model but couldn’t resolve a run.
-- Fixes: Standardized MLflow experiment name and model logging in training; inference loads the logged model consistently (and a local path for dev).
+**Base URL:** `https://telco-churn-app-vvdq.onrender.com`
 
-Local testing vs. prod paths
+| Endpoint | Description |
+|----------|-------------|
+| `GET /` | Health check |
+| `POST /predict` | Churn prediction |
+| `GET /docs` | Swagger UI |
+| `GET /ui` | Gradio web interface |
 
-- Cause: MLflow artifact URIs differ locally vs. in container.
-- Fixes: For local dev, load via direct ./mlruns/.../artifacts/model; in prod, container loads the packaged model path used at build time.
+### Example Prediction Request
+
+```bash
+curl -X POST https://telco-churn-app-vvdq.onrender.com/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gender": "Female",
+    "SeniorCitizen": 0,
+    "Partner": "Yes",
+    "Dependents": "No",
+    "tenure": 1,
+    "PhoneService": "No",
+    "MultipleLines": "No phone service",
+    "InternetService": "DSL",
+    "OnlineSecurity": "No",
+    "OnlineBackup": "Yes",
+    "DeviceProtection": "No",
+    "TechSupport": "No",
+    "StreamingTV": "No",
+    "StreamingMovies": "No",
+    "Contract": "Month-to-month",
+    "PaperlessBilling": "Yes",
+    "PaymentMethod": "Electronic check",
+    "MonthlyCharges": 29.85,
+    "TotalCharges": 29.85
+  }'
+```
+
+### Example Response
+
+```json
+{"prediction": "Likely to churn"}
+```
+
+---
+
+## Running Locally
+
+### Prerequisites
+- Python 3.12
+- Docker
+- Homebrew (macOS) — for `libomp` required by XGBoost
+
+### Setup
+
+```bash
+# Clone the repo
+git clone https://github.com/YOUR_USERNAME/telco-churn.git
+cd telco-churn
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Run the full training pipeline
+
+```bash
+python scripts/run_pipeline.py \
+  --input data/raw/Telco-Customer-Churn.csv \
+  --target Churn
+```
+
+### Process data only (no training)
+
+```bash
+python scripts/prepare_process_data.py
+```
+
+### Launch the API locally
+
+```bash
+python -m uvicorn src.app.main:app --host 0.0.0.0 --port 8000
+```
+
+### View MLflow experiments
+
+```bash
+mlflow ui --backend-store-uri file:./mlruns
+```
+
+### Run with Docker
+
+```bash
+docker build -t telco-churn-app .
+docker run -p 8000:8000 telco-churn-app
+```
+
+---
+
+## Deployment Flow
+
+```
+Push to main
+     ↓
+GitHub Actions
+     ↓
+Build Docker image (linux/amd64)
+     ↓
+Push to Docker Hub
+     ↓
+Render.com redeploys automatically
+     ↓
+Live at https://telco-churn-app-vvdq.onrender.com
+```
+
+---
+
+## Roadblocks & How They Were Solved
+
+**Virtual environment incomplete**
+- Cause: `Ctrl+C` interrupted `python -m venv` mid-setup, leaving no `activate` script.
+- Fix: Deleted incomplete venv with `rm -rf venv` and reran from scratch.
+
+**`pkg_resources` missing (MLflow)**
+- Cause: `setuptools>=70` moved `pkg_resources` out of its expected location.
+- Fix: Pinned `setuptools<70` in `requirements.txt`.
+
+**XGBoost failed to load on macOS**
+- Cause: `libomp.dylib` (OpenMP) not installed — required for parallel CPU computation.
+- Fix: `brew install libomp`.
+
+**Great Expectations API mismatch**
+- Cause: Code used v2 API (`ge.dataset.PandasDataset`) but v3+ was installed.
+- Fix: Pinned `great-expectations<1.0`.
+
+**`TotalCharges` validation error**
+- Cause: Raw CSV has blank strings for new customers; GE couldn't compare strings to integers.
+- Fix: Added `pd.to_numeric()` coercion before GE numeric range checks.
+
+**Gradio/FastAPI dependency conflicts in Docker**
+- Cause: Fully pinned `requirements.txt` from Mac dev environment had mutually incompatible versions of gradio, starlette, fastapi, pillow, and markupsafe.
+- Fix: Rewrote `requirements.txt` from scratch with only production-necessary packages and flexible version constraints. Upgraded gradio from 3.x to 5.23.3.
+
+**Docker image platform mismatch on Render**
+- Cause: Mac M-series chip builds `linux/arm64` images by default; Render requires `linux/amd64`.
+- Fix: Rebuilt with `docker buildx build --platform linux/amd64 --push`.
+
+**`feature_columns.txt` not found in container**
+- Cause: `inference.py` looked for the file inside `model/` but MLflow logged it one level up.
+- Fix: Added fallback to `artifacts/feature_columns.json` which the training pipeline always saves locally.
+
+---
+
+## Project Structure
+
+```
+churn/
+├── data/
+│   ├── raw/                  # Original dataset (gitignored)
+│   └── processed/            # Cleaned dataset (gitignored)
+├── src/
+│   ├── app/                  # FastAPI + Gradio app
+│   ├── data/                 # load_data.py, preprocess.py
+│   ├── features/             # build_features.py
+│   ├── models/               # train.py, evaluate.py, tune.py
+│   ├── serving/              # inference.py + model artifacts
+│   └── utils/                # validate_data.py, utils.py
+├── scripts/
+│   ├── run_pipeline.py       # Full training pipeline
+│   ├── prepare_process_data.py
+│   ├── test_pipeline_phase1_data_features.py
+│   ├── test_pipeline_phase2_modeling.py
+│   └── test_fastapi.py
+├── artifacts/                # feature_columns.json, preprocessing.pkl (gitignored)
+├── mlruns/                   # MLflow tracking (gitignored)
+├── notebooks/                # EDA notebook
+├── dockerfile
+├── requirements.txt
+├── .gitignore
+└── README.md
+```

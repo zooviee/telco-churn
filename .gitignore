@@ -34,8 +34,9 @@ data/external/
 *.feather
 
 # ── Documentation ───────────────────────────────────────────────────
-.docx
-.pdf
+*.docx
+*.pdf
+
 
 
 # ── Model Artifacts ───────────────────────────────────────────
