@@ -111,7 +111,7 @@ curl -X POST https://telco-churn-app-vvdq.onrender.com/predict \
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/telco-churn.git
+git clone https://github.com/zooviee/telco-churn.git
 cd telco-churn
 
 # Create and activate virtual environment
